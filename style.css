@@ -1,0 +1,530 @@
+:root {
+    --bg-color: #1a1a2e;
+    --primary-color: #16213e;
+    --secondary-color: #0f3460;
+    --accent-color: #e94560;
+    --text-color: #dcdcdc;
+    --success-color: #4CAF50; /* Initial color for level 1 */
+    --fail-color: #e94560;
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* background-color is now handled by the 3D canvas */
+    color: var(--text-color);
+    font-family: 'Arial', sans-serif;
+}
+
+#background-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+#game-canvas {
+    max-width: 90vw;
+    max-height: 90vh;
+    aspect-ratio: 1 / 1;
+    background-color: transparent;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    touch-action: none; /* Prevents double tap zoom */
+}
+
+#ui-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    pointer-events: none; /* Let clicks pass through to canvas */
+}
+
+#score-display {
+    position: absolute;
+    top: 5vh;
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+#level-display {
+    position: absolute;
+    font-size: clamp(4rem, 20vw, 8rem);
+    font-weight: bold;
+    color: rgba(220, 220, 220, 0.5);
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 0; /* Place it behind the menus, but on top of canvas */
+}
+
+#start-menu, #game-over-menu {
+    background-color: rgba(22, 33, 62, 0.9);
+    padding: 12px 20px;
+    border-radius: 12px;
+    pointer-events: all;
+    max-width: 90%;
+    z-index: 1;
+    position: absolute;
+    bottom: 20px;
+}
+
+#start-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+#start-menu h1 { 
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+#start-menu p { 
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+#game-over-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+}
+
+#game-over-menu h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+#game-over-menu p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+#game-over-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
+    width: 100%;
+    align-items: stretch;
+}
+
+#leaderboard-btn, #home-btn {
+    flex-grow: 0; /* Let it size to its content/padding */
+    padding-left: 12px;
+    padding-right: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#leaderboard-btn svg, #home-btn svg {
+    height: 1.2em; /* Size relative to button font-size */
+}
+
+#difficulty-selection {
+    display: flex;
+    gap: 8px;
+    /* flex-wrap: wrap; */ /* Removed */
+    justify-content: center;
+    width: 100%;
+}
+
+button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    pointer-events: all;
+    font-weight: bold;
+}
+
+.menu-btn {
+    flex-grow: 1;
+    flex-shrink: 1;
+    /* flex-basis: 0; */ /* Removed to allow content-based sizing */
+    padding: 10px 8px; /* Adjusted padding */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* min-width: 0; */ /* Removed to allow content-based sizing */
+}
+
+.menu-btn {
+    font-size: clamp(0.65rem, 2.8vw, 0.9rem);
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button:disabled:hover {
+    background-color: #555;
+}
+
+button:hover, button:focus {
+    background-color: var(--btn-color, var(--accent-color));
+    outline: none;
+}
+
+.difficulty-btn[data-difficulty="medium"] {
+    --btn-color: #f07b3f;
+}
+.difficulty-btn[data-difficulty="hard"] {
+    --btn-color: #e94560;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+#replay-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+#player-root {
+    width: 100%;
+    height: 100%;
+}
+
+#close-replay-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    cursor: pointer;
+    z-index: 101;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+#leaderboard-difficulty-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.leaderboard-filter-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.leaderboard-filter-btn:hover {
+    background-color: var(--secondary-color);
+}
+
+.leaderboard-filter-btn.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    font-weight: bold;
+}
+
+#leaderboard-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(26, 26, 46, 0.95);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: var(--text-color);
+    overflow-y: auto;
+}
+
+#leaderboard-view h2 {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+#leaderboard-list {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1; /* Allow list to take up space */
+    min-height: 0; /* For flexbox proper sizing */
+}
+
+.leaderboard-entry-wrapper {
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.leaderboard-entry {
+    display: grid;
+    grid-template-columns: 30px 40px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 8px; /* For when it's not expanded */
+    transition: border-radius 0.2s ease-in-out;
+}
+
+.leaderboard-entry.expanded {
+    background-color: #2a2a4e; /* Slightly lighter to show it's active */
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.leaderboard-entry .rank {
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.leaderboard-entry .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent long names from breaking layout */
+}
+
+.leaderboard-entry .username {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.games-played {
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.leaderboard-entry .score {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    margin-right: 5px; /* Add some space before the button */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+}
+
+.score-list-container {
+    padding: 0 10px 10px 10px; /* Match entry padding */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 500px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.score-list-container.hidden {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+.score-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--secondary-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.score-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.score-entry-score {
+    font-weight: bold;
+}
+
+.score-entry-level {
+    font-size: 0.9rem;
+    color: #c0c0c0;
+}
+
+.score-entry-date {
+    font-size: 0.75rem;
+    color: #aaa;
+}
+
+.score-entry .watch-replay-btn {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+#leaderboard-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding-bottom: 10px; /* Space from bottom of screen */
+    width: 100%;
+    max-width: 600px;
+}
+
+#leaderboard-pagination button {
+    padding: 8px 12px;
+    min-width: 44px;
+}
+
+#leaderboard-pagination .page-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#leaderboard-pagination input[type="number"] {
+    width: 60px;
+    padding: 8px;
+    font-size: 1rem;
+    text-align: center;
+    border: 1px solid var(--secondary-color);
+    border-radius: 6px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    -moz-appearance: textfield; /* Firefox */
+}
+
+#leaderboard-pagination input[type="number"]::-webkit-outer-spin-button,
+#leaderboard-pagination input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#close-leaderboard-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2.5rem;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    z-index: 101;
+    padding: 0;
+    line-height: 1;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#confetti-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.1) translate(-50%, -50%);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.2) translate(0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) translate(0, 0);
+    }
+}
+
+@keyframes bounceOut {
+    0% {
+        transform: scale(1) translate(0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5) translate(150%, 0);
+        opacity: 0;
+    }
+}
+
+.level-in {
+    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.level-out {
+    animation: bounceOut 0.4s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
